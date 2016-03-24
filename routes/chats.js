@@ -4,6 +4,7 @@ var Chats = require("../collections/chats");
 var User = require("../models/user");
 var Authorization = require("../models/authorization")
 var jwtDecode = require('jwt-decode');
+var debug = require('debug');
 
 router.get('/', function(req, res) {
   var authId = jwtDecode(req.headers.estudyauthtoken).id;
@@ -13,13 +14,15 @@ router.get('/', function(req, res) {
       return response.toJSON().user;
     })
     .then(function (user){
-      return User.where({id: user.id}).fetch({withRelated: ['image', 'chats']})
+      return User.where({id: user.id}).fetch({withRelated: [ 'chats']})
     })
     .then(function (fetchedUser) {
       return fetchedUser.related('chats');
     })
     .then(function(chatsList) {
-      return chatsList.load(['users']);
+      chatsList.load(['users', 'users.image']).then(function(response) {
+        console.log(response.toJSON()[0].users);
+      });
     });
   }
   else {
