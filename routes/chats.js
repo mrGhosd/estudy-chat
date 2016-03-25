@@ -2,6 +2,7 @@ var express = require('express');
 var router = express.Router();
 var Chats = require("../collections/chats");
 var User = require("../models/user");
+var Message = require("../models/message");
 var Authorization = require("../models/authorization")
 var jwtDecode = require('jwt-decode');
 var debug = require('debug');
@@ -20,10 +21,10 @@ router.get('/', function(req, res) {
       return fetchedUser.related('chats');
     })
     .then(function(chatsList) {
-      return chatsList.load(['users.image']);
+      return chatsList.load(['users.image', 'messages.user', 'messages.chat']);
     })
     .then(function(list) {
-      console.log(list.toJSON()[0].users);
+      res.json({chats: list.toJSON({virtuals: true})});
     });
   }
   else {
