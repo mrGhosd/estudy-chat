@@ -20,9 +20,10 @@ router.get('/', function(req, res) {
       return fetchedUser.related('chats');
     })
     .then(function(chatsList) {
-      chatsList.load(['users', 'users.image']).then(function(response) {
-        console.log(response.toJSON()[0].users);
-      });
+      return chatsList.load(['users.image']);
+    })
+    .then(function(list) {
+      console.log(list.toJSON()[0].users);
     });
   }
   else {
