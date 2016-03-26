@@ -10,6 +10,7 @@
   "license": "ISC",
   "dependencies": {
     "bookshelf": "^0.9.2",
+    "bookshelf-paginator": "^1.1.2",
     "express": "^4.13.4",
     "forever": "^0.15.1",
     "jwt-decode": "^2.0.1",

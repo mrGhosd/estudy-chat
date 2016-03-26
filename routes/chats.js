@@ -21,7 +21,9 @@ router.get('/', function(req, res) {
       return fetchedUser.related('chats');
     })
     .then(function(chatsList) {
-      return chatsList.load(['users.image', 'messages.user', 'messages.chat']);
+      return chatsList.load(['users.image', 'messages.user', 'messages.chat', {messages: function(db) {
+        db.limit(1);
+      }}]);
     })
     .then(function(list) {
       res.json({chats: list.toJSON({virtuals: true})});
@@ -30,7 +32,6 @@ router.get('/', function(req, res) {
   else {
       res.json({list: 'list of dialogs'});
   }
-
 });
 // define the about route
 router.get('/:id', function(req, res) {
