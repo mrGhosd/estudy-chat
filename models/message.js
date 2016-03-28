@@ -11,3 +11,5 @@ var Message = bookshelf.model('Message', {
     return this.belongsTo('Chat');
   }
 });
+
+module.exports = Message;
