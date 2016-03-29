@@ -26,7 +26,7 @@ router.post('/', function(req, res) {
       }
     })
     .then(function(message) {
-      return Message.forge({id: message.toJSON().id}).fetch({withRelated: ['user.image', 'chat']});
+      return Message.forge({id: message.toJSON().id}).fetch({withRelated: ['user.image', 'chat.users.image']});
     })
     .then(function(fullMessage) {
       res.json({message: fullMessage.toJSON({virtuals: true})});
