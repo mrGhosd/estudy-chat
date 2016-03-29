@@ -1,7 +1,8 @@
+var appBase = require("./utils/app_base");
 var express = require("express"),
-    app = express(),
-    http = require("http").createServer(app),
-    io = require("socket.io").listen(http),
+    app = appBase.app,
+    http = appBase.http,
+    io = appBase.io,
     bookshelf = require("./db"),
     Users = require("./collections/users"),
     chats = require("./routes/chats"),
@@ -17,7 +18,6 @@ app.use(cors());
 app.use(bodyParser.json());
 app.use('/chats', chats);
 app.use('/messages', messages);
-
 
 io.on('connection', function(socket) {
   socket.on('chatmessage', function(data) {

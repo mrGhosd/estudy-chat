@@ -5,6 +5,7 @@ var Chat = require("../models/chat");
 var Message = require("../models/message");
 var Authorization = require("../models/authorization")
 var jwtDecode = require('jwt-decode');
+var io = require('../utils/app_base').io;
 
 router.post('/', function(req, res) {
   var message = req.body.message;
@@ -30,6 +31,11 @@ router.post('/', function(req, res) {
     })
     .then(function(fullMessage) {
       res.json({message: fullMessage.toJSON({virtuals: true})});
+      fullMessage.toJSON().chat.users.map(function(user) {
+        var id = user.id;
+        var eventName = 'user'+id+'chatmessage';
+        io.sockets.emit(eventName, { obj: fullMessage.toJSON() });
+      });
     });
   }
   else {
