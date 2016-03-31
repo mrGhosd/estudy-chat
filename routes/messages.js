@@ -9,8 +9,8 @@ var io = require('../utils/app_base').io;
 
 router.post('/', function(req, res) {
   var message = req.body.message;
-  message.created_at = Date.now();
-  message.updated_at = Date.now();
+  message.created_at = new Date().toISOString();
+  message.updated_at = new Date().toISOString();
   var authId = jwtDecode(req.headers.estudyauthtoken).id;
   if (authId) {
     Authorization.where({id: authId}).fetch({withRelated: ['user' ]})
