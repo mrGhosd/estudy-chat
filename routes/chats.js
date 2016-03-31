@@ -45,7 +45,7 @@ router.get('/:id', function(req, res) {
     .then(function (user){
       return Chat.where({id: req.params.id}).fetch({withRelated:
         [ 'users.image', 'messages.user', 'messages.chat', 'messages.user.image', { messages: function(db) {
-          db.limit(20);
+          db.orderBy('created_at', 'DESC').limit(20);
       }}]});
     })
     .then(function (fetchedUser) {
