@@ -1,4 +1,5 @@
 var express = require('express');
+var bookshelf = require("../db");
 var router = express.Router();
 var User = require("../models/user");
 var Chat = require("../models/chat");
@@ -6,6 +7,33 @@ var Message = require("../models/message");
 var Authorization = require("../models/authorization")
 var jwtDecode = require('jwt-decode');
 var io = require('../utils/app_base').io;
+var pm = require('bookshelf-pagemaker')(bookshelf);
+
+router.get('/', function(req, res) {
+  var authId = jwtDecode(req.headers.estudyauthtoken).id;
+  if (authId) {
+    var page = req.param('page');
+    var chatId = req.param('chat_id');
+    pm(Message).forge()
+    .limit(20)
+    .page(page || 2)
+    .query(function(db) {
+      db.where('chat_id', chatId);
+    })
+    .order('desc')
+    .paginate({
+      request: req,
+      withRelated: ['user.image', 'chat.users.image']
+    })
+    .end()
+    .then(function(messages) {
+      res.json({messages: messages})
+    });
+  }
+  else {
+
+  }
+});
 
 router.post('/', function(req, res) {
   var message = req.body.message;
