@@ -20,12 +20,9 @@ app.use('/chats', chats);
 app.use('/messages', messages);
 
 io.on('connection', function(socket) {
-  socket.on('chatmessage', function(data) {
-    var usersEmails = data.chat.users.map(function(user) {
-      var id = user.id;
-      var eventName = 'user'+id+'chatmessage';
-      io.sockets.emit(eventName, { obj: data });
-    });
+  socket.on('userbegintyping', function(data) {
+    var eventName = 'chat' + data.chat.id + 'usertyping';
+    io.sockets.emit(eventName, data);
   });
 });
 
