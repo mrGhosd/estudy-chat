@@ -24,6 +24,11 @@ io.on('connection', function(socket) {
     var eventName = 'chat' + data.chat.id + 'usertyping';
     io.sockets.emit(eventName, data);
   });
+
+  socket.on('userendtyping', function(data) {
+    var eventName = 'chat' + data.chat.id + 'userendtyping';
+    io.sockets.emit(eventName, data);
+  });
 });
 
 http.listen(app.get("port"), app.get("ipaddr"), function() {
