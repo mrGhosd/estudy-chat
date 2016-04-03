@@ -7,6 +7,32 @@ var Message = require("../models/message");
 var Authorization = require("../models/authorization")
 var jwtDecode = require('jwt-decode');
 var debug = require('debug');
+var elasticsearch = require("../search");
+
+router.get('/search', function(req, res) {
+  var authId = jwtDecode(req.headers.estudyauthtoken).id;
+  if (authId) {
+    Authorization.where({id: authId}).fetch({withRelated: ['user' ]})
+    .then(function(response) {
+      return response.toJSON().user;
+    })
+  }
+  else {
+    elasticsearch.search({
+      index: 'chats',
+      type: 'chat',
+      body: {
+        query: {
+          match: {
+            body: 'vadim'
+          }
+        }
+      }
+    }).then(function(response) {
+      console.log(response.hits.hits);
+    });
+  }
+});
 
 router.get('/', function(req, res) {
   var authId = jwtDecode(req.headers.estudyauthtoken).id;
