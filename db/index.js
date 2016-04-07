@@ -3,7 +3,8 @@ var knex = require('knex')({
   connection: {
     host     : '127.0.0.1',
     database : 'estudy_development',
-    charset  : 'utf8'
+    charset  : 'utf8',
+    "timezone": "UTC"  
   }
 });
 

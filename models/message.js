@@ -4,6 +4,7 @@ var User = require('./user');
 
 var Message = bookshelf.model('Message', {
   tableName: 'messages',
+  hasTimestamps: true,
   user: function() {
     return this.belongsTo('User');
   },
