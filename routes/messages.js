@@ -46,12 +46,16 @@ router.post('/', function(req, res) {
       return response.toJSON().user;
     })
     .then(function(currentUser) {
+      if (message.text === "") throw new Error("Text can't be blank");
       if (message.chat_id) {
         return Message.forge({
           chat_id: message.chat_id,
           user_id: message.user_id,
           text: message.text
         }).save();
+      }
+      else {
+        //create new chat
       }
     })
     .then(function(message) {
@@ -64,6 +68,9 @@ router.post('/', function(req, res) {
         var eventName = 'user'+id+'chatmessage';
         io.sockets.emit(eventName, { obj: fullMessage.toJSON() });
       });
+    })
+    .catch(function(error) {
+      res.status(422).json({errors: [error.message]});
     });
   }
   else {
