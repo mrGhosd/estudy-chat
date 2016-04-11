@@ -2,6 +2,7 @@ var express = require('express');
 var bookshelf = require("../db");
 var router = express.Router();
 var User = require("../models/user");
+var Attach = require("../models/attach");
 var Chat = require("../models/chat");
 var Message = require("../models/message");
 var Authorization = require("../models/authorization")
@@ -36,9 +37,9 @@ router.get('/', function(req, res) {
 });
 
 router.post('/', function(req, res) {
-  var message = req.body.message;
-  message.created_at = new Date().toISOString();
-  message.updated_at = new Date().toISOString();
+  var messageParams = req.body.message;
+  messageParams.created_at = new Date().toISOString();
+  messageParams.updated_at = new Date().toISOString();
   var authId = jwtDecode(req.headers.estudyauthtoken).id;
   if (authId) {
     Authorization.where({id: authId}).fetch({withRelated: ['user' ]})
@@ -46,20 +47,32 @@ router.post('/', function(req, res) {
       return response.toJSON().user;
     })
     .then(function(currentUser) {
-      if (message.text === "") throw new Error("Text can't be blank");
-      if (message.chat_id) {
+      if (messageParams.text === "") throw new Error("Text can't be blank");
+      if (messageParams.chat_id) {
         return Message.forge({
-          chat_id: message.chat_id,
-          user_id: message.user_id,
-          text: message.text
+          chat_id: messageParams.chat_id,
+          user_id: messageParams.user_id,
+          text: messageParams.text
         }).save();
       }
       else {
         //create new chat
       }
     })
+    .then(function(newMessage) {
+      var promises = [];
+      if (messageParams.attaches) {
+        promises.push(newMessage);
+        messageParams.attaches.map(function(attach) {
+          console.log(newMessage.toJSON().id);
+          var newAttach = new Attach({id: attach.id}).save({ attachable_id: newMessage.toJSON().id });
+          promises.push(newAttach);
+        });
+      }
+      return Promise.all(promises);
+    })
     .then(function(message) {
-      return Message.forge({id: message.toJSON().id}).fetch({withRelated: ['user.image', 'chat.users.image']});
+      return Message.forge({id: message[0].toJSON().id}).fetch({withRelated: ['user.image', 'chat.users.image', 'attaches']});
     })
     .then(function(fullMessage) {
       res.json({message: fullMessage.toJSON({virtuals: true})});

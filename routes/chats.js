@@ -50,11 +50,12 @@ router.get('/:id', function(req, res) {
     })
     .then(function (user){
       return Chat.where({id: req.params.id}).fetch({withRelated:
-        [ 'users.image', 'messages.user', 'messages.chat', 'messages.user.image', { messages: function(db) {
+        [ 'users.image', 'messages.user', 'messages.chat', 'messages.user.image', 'messages.attaches', { messages: function(db) {
           db.orderBy('id', 'desc').limit(20);
       }}]});
     })
     .then(function (fetchedUser) {
+      console.log(fetchedUser.toJSON({virtuals: true}).messages[0]);
       res.json({chat: fetchedUser.toJSON({virtuals: true})});
     })
   }
