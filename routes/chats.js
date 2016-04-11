@@ -11,7 +11,14 @@ var bookshelf = require("../db");
 var pm = require('bookshelf-pagemaker')(bookshelf);
 
 router.get('/', function(req, res) {
-  var authId = jwtDecode(req.headers.estudyauthtoken).id;
+  var authId;
+  try {
+    authId = jwtDecode(req.headers.estudyauthtoken).id;
+  }
+  catch(e) {
+    res.status(401).json({errors: 'Unauthorized'});
+  }
+
   if (authId) {
     Authorization.where({id: authId}).fetch({withRelated: ['user' ]})
     .then(function(response) {
@@ -31,9 +38,6 @@ router.get('/', function(req, res) {
     .then(function(list) {
       res.json({chats: list.toJSON({virtuals: true})});
     });
-  }
-  else {
-      res.json({list: 'list of dialogs'});
   }
 });
 
