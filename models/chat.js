@@ -12,6 +12,9 @@ var Chat = bookshelf.model('Chat', {
   },
   user_chats: function() {
     return this.hasMany(UserChat, 'chat_id');
+  },
+  active: function() {
+    return this.where({user_chats: { active: true }})
   }
 });
 

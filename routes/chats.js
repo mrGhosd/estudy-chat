@@ -27,7 +27,9 @@ router.get('/', function(req, res) {
       return response.toJSON().user;
     })
     .then(function (user){
-      return User.where({id: user.id}).fetch({withRelated: [ 'chats' ]})
+      return User.where({id: user.id}).fetch({withRelated: [ {chats: function(db) {
+        db.where('user_chats.active', '=', 'true');
+      }} ]})
     })
     .then(function (fetchedUser) {
       return fetchedUser.related('chats');
@@ -82,6 +84,7 @@ router.post('/', function(req, res) {
     return knex.raw("select * from user_chats where user_id in (??) and active=false;", [chatParams.users]);
   })
   .then(function(userChat) {
+    console.log(userChat.rows);
     if (userChat.rows.length === 0) {
       return Chat.forge({
         created_at: chatParams.created_at,
@@ -89,7 +92,6 @@ router.post('/', function(req, res) {
       }).save();
     }
     else {
-
     }
   })
   .then(function(chat) {
@@ -195,7 +197,7 @@ router.delete('/:id', function(req, res) {
   })
   .then(function(userChat) {
     if (userChat.toJSON()) {
-      return userChat.destroy();
+      return userChat.save({active: false});
     }
   })
   .then(function(destroyedUserChat) {
