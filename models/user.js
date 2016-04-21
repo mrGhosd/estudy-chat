@@ -17,7 +17,12 @@ var User = bookshelf.model('User', {
   },
   virtuals: {
     imageData: function() {
-      return { image: { url: "/uploads/image/" + this.related('image').get('id') + "/" + this.related('image').get('file') } }
+      if (this.related('image').toJSON().fileData) {
+        return { image: { url: "/uploads/image/" + this.related('image').get('id') + "/" + this.related('image').get('file') } }
+      }
+      else {
+        return {};
+      }
     }
   }
 });

@@ -109,17 +109,27 @@ router.post('/', function(req, res) {
         var userId = chatParams.users[index];
         var promise = UserChat.forge({
           user_id: userId,
-          chat_id: createdChat.toJSON().id
+          chat_id: createdChat.toJSON().id,
+          created_at: chatParams.created_at,
+          updated_at: chatParams.updated_at
         }).save();
         promises.push(promise);
       }
     });
+    var messagePromise = Message.forge({
+      chat_id: createdChat.toJSON().id,
+      user_id: currentUser.id,
+      text: chatParams.message,
+      created_at: chatParams.created_at,
+      updated_at: chatParams.updated_at
+    }).save();
+    promises.push()
     return Promise.all(promises);
   })
   .then(function(chat) {
     return Chat.forge({ id: createdChat.toJSON().id }).fetch({withRelated:
       [ 'users.image', 'messages.user', 'messages.chat', 'messages.user.image', 'messages.attaches', { messages: function(db) {
-        db.orderBy('id', 'desc').limit(20);
+        db.orderBy('id', 'desc').limit(1);
     }}]});
   })
   .then(function(chat) {
@@ -138,7 +148,6 @@ router.post('/', function(req, res) {
         errorsHash.message = errorMsg;
       }
     });
-    console.log(errorsHash);
     res.status(422).json({errors: errorsHash});
   });;
 });
