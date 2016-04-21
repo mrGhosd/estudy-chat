@@ -10,7 +10,6 @@ var Attach = bookshelf.model('Attach', {
     fileData: function() {
       var attach = this.attributes;
       if (Object.keys(attach).length > 0) {
-        if(attach.attachable_type !== 'User') console.log(attach);
         return { attach: { url: "/uploads/"+ attach.type.toLowerCase() +"/" + attach.id + "/" + attach.file } }
       }
     }

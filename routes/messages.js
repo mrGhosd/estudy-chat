@@ -64,7 +64,6 @@ router.post('/', function(req, res) {
       if (messageParams.attaches) {
         promises.push(newMessage);
         messageParams.attaches.map(function(attach) {
-          console.log(newMessage.toJSON().id);
           var newAttach = new Attach({id: attach.id}).save({ attachable_id: newMessage.toJSON().id });
           promises.push(newAttach);
         });

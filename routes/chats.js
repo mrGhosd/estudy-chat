@@ -46,6 +46,10 @@ router.get('/', function(req, res) {
 router.post('/', function(req, res) {
   var authId;
   var currentUser;
+  var chatParams = req.body.chat;
+  var createdChat;
+  chatParams.created_at = new Date().toISOString();
+  chatParams.updated_at = new Date().toISOString();
   try {
     authId = jwtDecode(req.headers.estudyauthtoken).id;
   }
@@ -59,20 +63,84 @@ router.post('/', function(req, res) {
     return currentUser;
   })
   .then(function(user) {
-    var promises = [];
-    if (req.body.chat.users.indexOf(user.id) === -1) {
-      req.body.chat.users.push(user.id);
+    if (chatParams.users.length < 1 || !chatParams.message) {
+      var errors = "";
+      if (chatParams.users.length < 1) {
+        errors += "Users: Can't be blank" + ";";;
+      }
+      if (!chatParams.message) {
+        errors += "Message: Can't be blank" + ";";
+      }
+
+      throw new Error(errors);
     }
-    // req.body.chat.users.forEach(function(item) {
-    //   var promise =
-    // });
-    console.log(req.body.chat.users);
-    return knex.raw("select * from user_chats where chat_id in (select chat_id from user_chats group by chat_id having count(*) > 1) and user_id in (??);", [req.body.chat.users]);
-    // return Chat.query({ where:  { user_chats: { user_id: req.body.chat.users } } });
+
+    var promises = [];
+    if (chatParams.users.indexOf(user.id) === -1) {
+      chatParams.users.push(user.id);
+    }
+    return knex.raw("select * from user_chats where user_id in (??) and active=false;", [chatParams.users]);
   })
   .then(function(userChat) {
-    console.log(userChat.rows);
-  });
+    if (userChat.rows.length === 0) {
+      return Chat.forge({
+        created_at: chatParams.created_at,
+        updated_at: chatParams.updated_at
+      }).save();
+    }
+    else {
+
+    }
+  })
+  .then(function(chat) {
+    createdChat = chat;
+    var promises = [];
+    chatParams.users.forEach(function(id) {
+      var promise = UserChat.where({user_id: id}).fetch();
+      promises.push(promise);
+    });
+
+    return Promise.all(promises);
+  })
+  .then(function(userChats) {
+    var promises = [];
+    userChats.forEach(function(userChat, index) {
+      if (!!!userChat || (!!userChat && userChat.toJSON().id !== createdChat.toJSON().id )) {
+        var userId = chatParams.users[index];
+        var promise = UserChat.forge({
+          user_id: userId,
+          chat_id: createdChat.toJSON().id
+        }).save();
+        promises.push(promise);
+      }
+    });
+    return Promise.all(promises);
+  })
+  .then(function(chat) {
+    return Chat.forge({ id: createdChat.toJSON().id }).fetch({withRelated:
+      [ 'users.image', 'messages.user', 'messages.chat', 'messages.user.image', 'messages.attaches', { messages: function(db) {
+        db.orderBy('id', 'desc').limit(20);
+    }}]});
+  })
+  .then(function(chat) {
+    res.json({ chat: chat });
+  })
+  .catch(function(error) {
+    var errorsArr = error.message.split(';');
+    var errorsHash = {};
+    errorsArr.forEach(function(item) {
+      if (item.match(/Users/)) {
+        var errorMsg = item.substr("Users".length + 2, item.length);
+        errorsHash.users = errorMsg;
+      }
+      if (item.match(/Message/)) {
+        var errorMsg = item.substring("Message".length + 2, item.length);
+        errorsHash.message = errorMsg;
+      }
+    });
+    console.log(errorsHash);
+    res.status(422).json({errors: errorsHash});
+  });;
 });
 
 router.get('/:id', function(req, res) {
@@ -89,7 +157,6 @@ router.get('/:id', function(req, res) {
       }}]});
     })
     .then(function (fetchedUser) {
-      console.log(fetchedUser.toJSON({virtuals: true}).messages[0]);
       res.json({chat: fetchedUser.toJSON({virtuals: true})});
     })
   }
