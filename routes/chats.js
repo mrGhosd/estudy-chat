@@ -174,4 +174,33 @@ router.get('/:id', function(req, res) {
   }
 });
 
+router.delete('/:id', function(req, res) {
+  var authId;
+  var currentUser;
+  console.log(req.params);
+  try {
+    authId = jwtDecode(req.headers.estudyauthtoken).id;
+  }
+  catch(e) {
+    res.status(401).json({errors: 'Unauthorized'});
+  }
+
+  Authorization.where({id: authId}).fetch({withRelated: ['user' ]})
+  .then(function(response) {
+    currentUser = response.toJSON().user;
+    return currentUser;
+  })
+  .then(function(user) {
+    return UserChat.where({user_id: user.id, chat_id: req.params.id}).fetch();
+  })
+  .then(function(userChat) {
+    if (userChat.toJSON()) {
+      return userChat.destroy();
+    }
+  })
+  .then(function(destroyedUserChat) {
+    res.json({ chat: destroyedUserChat.toJSON() });
+  });
+});
+
 module.exports = router;
