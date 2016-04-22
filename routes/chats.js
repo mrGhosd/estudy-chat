@@ -84,30 +84,41 @@ router.post('/', function(req, res) {
     return knex.raw("select * from user_chats where user_id in (??) and active=false;", [chatParams.users]);
   })
   .then(function(userChat) {
-    console.log(userChat.rows);
+    var findedChat = userChat.rows
     if (userChat.rows.length === 0) {
-      return Chat.forge({
-        created_at: chatParams.created_at,
-        updated_at: chatParams.updated_at
-      }).save();
+      return createChat(chatParams);
     }
     else {
+        return Chat.where({id: findedChat[0].chat_id}).fetch({withRelated: ['users']}).then(function(response) {
+          var userChatUsers = response.toJSON().users;
+          var condition = chatParams.users.length === userChatUsers.length &&
+            userChatUsers.length === numberOfMatches(userChatUsers, chatParams.users);
+          findedChat.forEach(function(item) {
+            if (condition) {
+                UserChat.where({id: item.id}).save({active: true}, {patch: true})
+              }
+            });
+            if (!condition) {
+              return createChat(chatParams);
+            }
+        });
+
+      return Chat.where({id: findedChat[0].chat_id}).fetch();
     }
   })
   .then(function(chat) {
     createdChat = chat;
     var promises = [];
     chatParams.users.forEach(function(id) {
-      var promise = UserChat.where({user_id: id}).fetch();
+      var promise = UserChat.where({user_id: id, chat_id: createdChat.toJSON().id}).fetch();
       promises.push(promise);
     });
-
     return Promise.all(promises);
   })
   .then(function(userChats) {
     var promises = [];
     userChats.forEach(function(userChat, index) {
-      if (!!!userChat || (!!userChat && userChat.toJSON().id !== createdChat.toJSON().id )) {
+      if (!userChat) {
         var userId = chatParams.users[index];
         var promise = UserChat.forge({
           user_id: userId,
@@ -125,7 +136,7 @@ router.post('/', function(req, res) {
       created_at: chatParams.created_at,
       updated_at: chatParams.updated_at
     }).save();
-    promises.push()
+    promises.push(messagePromise);
     return Promise.all(promises);
   })
   .then(function(chat) {
@@ -150,6 +161,7 @@ router.post('/', function(req, res) {
         errorsHash.message = errorMsg;
       }
     });
+    console.log(error);
     res.status(422).json({errors: errorsHash});
   });;
 });
@@ -167,8 +179,13 @@ router.get('/:id', function(req, res) {
           db.orderBy('id', 'desc').limit(20);
       }}]});
     })
-    .then(function (fetchedUser) {
-      res.json({chat: fetchedUser.toJSON({virtuals: true})});
+    .then(function (fetchedChat) {
+      if (fetchedChat) {
+        res.json({chat: fetchedChat.toJSON({virtuals: true})});
+      }
+      else {
+        res.status(404);
+      }
     })
   }
   else {
@@ -204,5 +221,22 @@ router.delete('/:id', function(req, res) {
     res.json({ chat: destroyedUserChat.toJSON() });
   });
 });
+
+var createChat = function (chatParams) {
+  return Chat.forge({
+    created_at: chatParams.created_at,
+    updated_at: chatParams.updated_at
+  }).save();
+}
+
+var numberOfMatches = function(defaultArr, checkArr) {
+  var numberOfMatches = 0;
+  defaultArr.forEach(function(item) {
+    if (checkArr.indexOf(item) > -1) {
+      numberOfMatches++;
+    }
+  });
+  return numberOfMatches;
+}
 
 module.exports = router;
