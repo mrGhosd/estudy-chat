@@ -35,12 +35,22 @@ router.get('/', function(req, res) {
       return fetchedUser.related('chats');
     })
     .then(function(chatsList) {
-      return chatsList.load(['users.image', 'messages.user', 'messages.chat', { messages: function(db) {
-        db.orderBy('id', 'desc').limit(1);
-      }}]);
+      var promises = [];
+      chatsList.toJSON().forEach(function(item) {
+        var chatPromise = Chat.where({id: item.id}).fetch({withRelated: [
+          'users.image', 'messages.user', 'messages.chat', { messages: function(db) {
+            db.orderBy('id', 'desc').limit(1);
+          }}
+        ]});
+        promises.push(chatPromise);
+      });
+      return Promise.all(promises);
     })
     .then(function(list) {
-      res.json({chats: list.toJSON({virtuals: true})});
+      var chatsList = list.map(function(item) {
+        return item.toJSON({virtuals: true});
+      });
+      res.json({chats: chatsList});
     });
   }
 });
