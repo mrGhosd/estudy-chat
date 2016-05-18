@@ -12,7 +12,7 @@ var express = require("express"),
 
 //app.set("ipaddr", "188.166.99.8");
 app.set("ipaddr", '127.0.0.1');
-app.set("port", 5001);
+app.set("port", 5002);
 
 app.use(cors());
 app.use(bodyParser.json());
